@@ -5,4 +5,4 @@ g++ HPAI_inference.cc -O3 -std=c++11 -fmax-errors=3 -o run_model.out
 
 sbatch run_model.sh
 
-An example shell script is included in this repository.
+An example shell script is included in this repository. The g++ compiler version was Debian 12.2.0-14.
