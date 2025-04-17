@@ -181,7 +181,6 @@ int main(int argc, char** argv)
 		} else {		
 			he.sample_exp_inf();                                          // Sets exposed and infection times for observed
 		}
-		//he.add_unobs();                                               // Adds plausible distribution of unobserved
 		he.set_T0();                                                  // Sets initial infection time
 	}
 
@@ -588,43 +587,6 @@ void Herd::sample_exp_inf()
 				in.dead = false;
 				in.found = false;
 				//if(in.Exp_t < 0.0) emsg("Problem");
-			}
-		}
-	}
-}
-
-/// This whole chunk below simulates an outbreak in a herd of the same size and uses this to propose unobserved infections
-void Herd::add_unobs()
-{
-	for(auto &in : ind){                     // First we turn off any infected, unobserved individuals (for simulation)
-		if(in.dead == false || in.found == false) in.inf = false;
-	}
-	
-	Herd herd_sim;                           // Simulates the same number of recoveries 
-	herd_sim.index = index;
-	herd_sim.beta1_param = beta1_param;
-	herd_sim.R0_param = R0_param;
-	
-	herd_sim.simulate(2071);
-	
-	auto time_shift = T_cull - herd_sim.T_cull;  // Shifts herd and herd_sim so they have the same cull time
-	for(auto &ind_sim : herd_sim.ind){
-		if(ind_sim.inf == true){
-			ind_sim.Exp_t += time_shift;
-			ind_sim.Inf_t += time_shift;
-			ind_sim.Rec_t += time_shift;
-		}
-	}
-
-	for(const auto &ind_sim : herd_sim.ind){// Copies over infected unobserved individuals
-		if((ind_sim.inf == true && ind_sim.dead == false) || (ind_sim.inf == true && ind_sim.found == false)){
-			for(auto &in : ind){
-				if(in.dead == false && in.inf == false && in.found == false){
-					in = ind_sim;
-					if(in.Exp_t < 0) emsg("Problem out of range");
-					if(in.Rec_t > T_cull) emsg("unobs problem"); 
-					break;
-				}
 			}
 		}
 	}
@@ -1164,7 +1126,7 @@ void Herd::multi_proposal()
 			}
 		
 			switch(type){
-				case ADD_UNOBS:                              // Adds a new unobserved mortality
+				case ADD_UNOBS:                              
 					if(nlist_sus > 0){
 						auto sus_sel = int(uniform_sample(0.0,1.0)*nlist_sus);     // Randomly selects a susceptible individual
 						auto i = list_sus[sus_sel];         
@@ -1198,7 +1160,7 @@ void Herd::multi_proposal()
 					}
 					break;
 					
-				case REM_UNOBS:                              // Removes an existing infected
+				case REM_UNOBS:                              
 					if(nlist_unobs > 0){
 						auto inf_sel = int(uniform_sample(0.0,1.0)*nlist_unobs);     // Randomly selects a infected individual
 						auto i = list_unobs[inf_sel];       
@@ -1227,7 +1189,7 @@ void Herd::multi_proposal()
 					}
 					break;
 
-                case ADD_HISTIMM:                              // Adds a new unobserved mortality
+                case ADD_HISTIMM:                             
 					if(nlist_sus > 0){
 						auto sus_sel = int(uniform_sample(0.0,1.0)*nlist_sus);     // Randomly selects a susceptible individual
 						auto i = list_sus[sus_sel];         
@@ -1251,7 +1213,7 @@ void Herd::multi_proposal()
 					}
 					break;  
 
-                case REM_HISTIMM:                              // Removes an existing infected
+                case REM_HISTIMM:                           
 					if(nlist_histimm > 0){
 						auto histimm_sel = int(uniform_sample(0.0,1.0)*nlist_histimm);     // Randomly selects a infected individual
 						auto i = list_histimm[histimm_sel];       
@@ -1275,7 +1237,7 @@ void Herd::multi_proposal()
 					}
 					break;  
 					
-				case ADD_IM:                              // Adds a new unobserved mortality
+				case ADD_IM:                          
 					if(nlist_sus > 0){
 						auto sus_sel = int(uniform_sample(0.0,1.0)*nlist_sus);     // Randomly selects a susceptible individual
 						auto i = list_sus[sus_sel];         
@@ -1309,7 +1271,7 @@ void Herd::multi_proposal()
 					}
 					break;
 					
-				case REM_IM:                              // Removes an existing infected
+				case REM_IM:                     
 					if(nlist_im > 0){
 						auto inf_sel = int(uniform_sample(0.0,1.0)*nlist_im);     // Randomly selects a infected individual
 						auto i = list_im[inf_sel];       
@@ -1338,7 +1300,7 @@ void Herd::multi_proposal()
 					}
 					break;	
 				
-				case RESAMPLE_OBS:                          // Makes a change to an observed infected individual
+				case RESAMPLE_OBS:                        
 					if(nlist_obs > 0){
 						auto &in = ind[list_obs[int(uniform_sample(0.0,1.0)*nlist_obs)]];
 						if(in.Exp_t == T0){                     // Resamples infection time for index case
@@ -1379,7 +1341,7 @@ void Herd::multi_proposal()
 					}
 					break;
 					
-				case RESAMPLE_UNOBS:                        // Makes a change to an unobserved dead individual
+				case RESAMPLE_UNOBS:                     
 					if(nlist_unobs > 0){
 						auto &in = ind[list_unobs[int(uniform_sample(0.0,1.0)*nlist_unobs)]];
 						auto dprobfi = in.sample_probability(tp);
@@ -1412,7 +1374,7 @@ void Herd::multi_proposal()
 					}
 					break;
 					
-				case RESAMPLE_IM:                        // Makes a change to an immune individual
+				case RESAMPLE_IM:                     
 					if(nlist_im > 0){
 						auto &in = ind[list_im[int(uniform_sample(0.0,1.0)*nlist_im)]];
 						auto dprobfi = in.sample_probability(tp);
