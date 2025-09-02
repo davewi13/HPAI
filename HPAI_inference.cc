@@ -25,7 +25,7 @@ Transmission transmission = FD;				 // Can choose DD (for density-dependent tran
 const auto phi_L = 1.0;                      // Inverse temperature multipling the infection process
 const auto phi_G = phi_L;                    // Inverse temperature multipling the transition process
 
-const auto nherd = 1u;                       // The number of herds
+const auto ncolony = 1u;                       // The number of colonies
 
 const auto alpha = 0.5;                      // Determines an exponentially distributed prior on index cases - irrelavant for ASF data as we will fix to have only one index case
 const auto index_max = 1;                    // The maximum limit on the number of index cases - the above line only matters if this is > 1
@@ -39,17 +39,16 @@ unsigned int s;                              // The sample number
 const int NO_INF = -10000;                   // The log likelihoFod of getting exposed when no infected
 
 bool simulated = false;				// Use simulated or observed removal times
-//const vector <int> herd_sizes = { 1614,1949,1753,1833,1320,600,600,600,2145};	// Vector option to allow multiple herds to be entered at once if parameters are pooled across herds
-//const vector <int> herd_sizes = { 1061};										// Herd size
-const vector <int> herd_sizes = { 2071};										// Herd size
-const vector <double> pct_seen = { 1.0};										// Proportion of the herd which dies before cull (only relevant if data is simulated)
+//const vector <int> colony_sizes = { 1061};										// Colony size
+const vector <int> colony_sizes = { 2071};										// Colony size
+const vector <double> pct_seen = { 1.0};										// Proportion of the outbreak that is oberved (NOT RELEVANT FOR HPAI ANALYSES IN THE PAPER - LEAVE AT 1)
 
-// Herd times can be entered as a 2 dimensional array in case running multiple herds at once.  The code as shown below would run for herd 1 only.
+// Carcass collection times for each colony
 //std::vector<std::vector<double>> remtimes = {{ 1.0, 2.0, 3.0, 4.0, 6.0, 6.0, 7.0, 8.0, 9.0, 9.0, 10.0, 11.0, 11.0, 11.0, 12.0, 12.0, 13.0, 13.0, 13.0, 14.0, 14.0, 14.0, 14.0, 14.0, 15.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 17.0, 17.0, 17.0, 18.0, 18.0, 19.0, 19.0, 19.0, 19.0, 19.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 27.0, 27.0, 27.0, 27.0, 27.0, 28.0, 28.0, 28.0, 28.0, 29.0, 29.0, 29.0, 30.0, 30.0, 31.0, 31.0, 32.0, 32.0, 32.0, 34.0, 34.0, 38.0}};
 std::vector<std::vector<double>> remtimes = {{ 1.0, 2.0, 5.0, 5.0, 7.0, 8.0, 8.0, 9.0, 9.0, 10.0, 10.0, 10.0, 10.0, 10.0, 11.0, 11.0, 11.0, 11.0, 12.0, 12.0, 12.0, 12.0, 12.0, 12.0, 12.0, 13.0, 13.0, 13.0, 13.0, 13.0, 13.0, 14.0, 14.0, 14.0, 14.0, 14.0, 14.0, 14.0, 14.0, 14.0, 14.0, 14.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 16.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 17.0, 18.0, 18.0, 18.0, 18.0, 18.0, 18.0, 18.0, 18.0, 18.0, 18.0, 18.0, 18.0, 18.0, 18.0, 18.0, 18.0, 18.0, 18.0, 18.0, 18.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 19.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 20.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 21.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 22.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 23.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 24.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 25.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 26.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 27.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 28.0, 29.0, 29.0, 29.0, 29.0, 29.0, 29.0, 29.0, 29.0, 29.0, 29.0, 29.0, 29.0, 29.0, 29.0, 29.0, 29.0, 29.0, 29.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 30.0, 31.0, 31.0, 31.0, 31.0, 31.0, 31.0, 31.0, 31.0, 31.0, 32.0, 32.0, 32.0, 32.0, 32.0, 32.0, 32.0, 32.0, 32.0, 33.0, 33.0, 33.0, 33.0, 33.0, 33.0, 33.0, 33.0, 33.0, 33.0, 33.0, 33.0, 34.0, 34.0, 34.0, 34.0, 34.0, 34.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 35.0, 36.0, 37.0, 37.0, 37.0, 37.0, 38.0, 39.0, 40.0, 40.0, 41.0, 43.0, 43.0, 46.0, 46.0, 53.0}};
 
-vector <Herd> herd(nherd); // Stores information 
-vector <Herd> herd_ppc(nherd);	
+vector <Colony> colony(ncolony); // Stores information 
+vector <Colony> colony_ppc(ncolony);	
 
 vector <Param> param;      // A list of all the model parameters
 
@@ -76,7 +75,7 @@ std::string filename3;
 
 ofstream trace;
 ofstream ppc;
-ofstream herd_data;
+ofstream colony_data;
 
 default_random_engine generator;
 
@@ -95,8 +94,8 @@ void mcmc_diagnostics();
 void check(int num);
 		
 void trace_init();
-void herd_init();
-void herd_write();
+void colony_init();
+void colony_write();
 void ppc_init();
 void trace_plot();
 void ppc_plot();
@@ -136,7 +135,7 @@ int main(int argc, char** argv)
 	ss3 << "ppc_hpai_obs_year1_fd_" << argv[1] << ".txt";
 	filename3 = ss3.str();
 	trace.open(filename);
-	herd_data.open(filename2);
+	colony_data.open(filename2);
 	ppc.open(filename3);
 	
 	slurm_id = std::stoi(argv[1]);			// Set the seed so that results can be replicated and each chain is different
@@ -153,55 +152,55 @@ int main(int argc, char** argv)
 	
 	generator.seed(14);
 	
-	for(auto h = 0u; h < nherd; h++){		// Set up each herd
-		herd[h].initialise(h);
+	for(auto h = 0u; h < ncolony; h++){		// Set up each colony
+		colony[h].initialise(h);
 		is_ppc = true;
-		herd_ppc[h].initialise(h);
+		colony_ppc[h].initialise(h);
 		is_ppc = false;
 	}
 	
-	herd_init();							// Sets up an output file for data on removal times in each herd			
+	colony_init();							// Sets up an output file for data on removal times in each colony			
 	
 	if(simulated){                                                    // Simulates some data and writes to a file
 		param_prior_init();            								  // Sets the parameter values
-		for(auto &he : herd) he.simulate(int(pct_seen[he.index]*herd_sizes[he.index]));
-		//for(auto &he : herd) he.simulate(int(1*herd_sizes[he.index]));
+		for(auto &co : colony) co.simulate(int(pct_seen[co.index]*colony_sizes[co.index]));
+		//for(auto &co : colony) co.simulate(int(1*colony_sizes[co.index]));
 	} 
 	else {                                                            // Loads some data
-		for(auto &he : herd) he.load_data();
+		for(auto &co : colony) co.load_data();
 	}
 	
-	herd_write();
+	colony_write();
 	generator.seed(slurm_id+10);
 	
 	param_prior_sample();											  // Samples values for each parameter from the priors  
-	for(auto &he : herd){        									  // Reconstructs other events from recovery times
+	for(auto &co : colony){        									  // Reconstructs other events from recovery times
 		if(simulated == true){
-			he.remove_exp_inf();
+			co.remove_exp_inf();
 		} else {		
-			he.sample_exp_inf();                                          // Sets exposed and infection times for observed
+			co.sample_exp_inf();                                          // Sets exposed and infection times for observed
 		}
-		he.set_T0();                                                  // Sets initial infection time
+		co.set_T0();                                                  // Sets initial infection time
 	}
 
 	mcmc_initialise();												  // For outputing information about the chains
 
-	for(auto &he : herd){											  // Outputs some info on the initial state straight away
+	for(auto &co : colony){											  // Outputs some info on the initial state straight away
 		auto ninf = 0u, ndead = 0u, nfound = 0u;
-		for(const auto &in : he.ind){
+		for(const auto &in : co.ind){
 			if(in.inf == true) ninf++;
 			if(in.dead == true) ndead++;
 			if(in.found == true) nfound++;
 		}
 			
-		cout << "Simulation of herd " << he.index << "     ";
+		cout << "Simulation of colony " << co.index << "     ";
 		cout << "  Infected: " << ninf << "      ";
 		cout << "  Dead: " << ndead << "      ";
 		cout << "  Found: " << nfound << "      ";
-		cout << "  Cull time: " << he.T_cull << endl;
+		cout << "  End time: " << co.T_end << endl;
 	
 		if(true){
-			for(const auto &in : he.ind){
+			for(const auto &in : co.ind){
 				if(in.inf == true){
 					cout << "  Exposed: " << in.Exp_t << " ";
 					cout << "Infected: " << in.Inf_t << " ";
@@ -230,8 +229,8 @@ int main(int argc, char** argv)
 			cout << "Sample " << s << endl;
 			/* auto historical_immunity_check = 0;
 			auto N_susceptible = 0;
-			for(auto &he : herd){
-				for(const auto &in : he.ind){
+			for(auto &co : colony){
+				for(const auto &in : co.ind){
 					if(in.inf == true){
 						cout << "  Exposed: " << in.Exp_t << " ";
 						cout << "Infected: " << in.Inf_t << " ";
@@ -252,30 +251,30 @@ int main(int argc, char** argv)
 		}
 		
 		if(s%10000 == 0){
-			for(auto &he : herd_ppc) he.simulate(int(1.0*herd_sizes[he.index]));
+			for(auto &co : colony_ppc) co.simulate(int(1.0*colony_sizes[co.index]));
 			ppc_plot();
 		}
 		
 		if(s%100 == 0) trace_plot();
 	
-		for(auto &he : herd){
-			if(model == EXT_INF) he.beta1_proposal();              // Proposals to change the external infection rate
+		for(auto &co : colony){
+			if(model == EXT_INF) co.beta1_proposal();              // Proposals to change the external infection rate
 
-			he.R0_proposal();                   // Proposals to change transmission rate
+			co.R0_proposal();                   // Proposals to change transmission rate
 
-			he.p_rem_proposal();				// Proposals to change probability of dying
+			co.p_rem_proposal();				// Proposals to change probability of dying
 
-			he.p_histimm_proposal();			// Proposals to change probability of having historically acquired immunity
+			co.p_histimm_proposal();			// Proposals to change probability of having historically acquired immunity
 
-			he.p_nd_proposal();					// Proposals to change probability of mortality not being detected
+			co.p_nd_proposal();					// Proposals to change probability of mortality not being detected
 
-			he.multi_proposal();                // Proposals which change exposure / infection times
+			co.multi_proposal();                // Proposals which change exposure / infection times
 	
-			he.swap_proposal();                 // Proposals which change which individuals are indexes
+			co.swap_proposal();                 // Proposals which change which individuals are indexes
 			
-			he.T0_proposal();                   // Proposals which change initial infection time
+			co.T0_proposal();                   // Proposals which change initial infection time
 			
-			he.joint_T0_event_proposal();       // Proposals which change T0 and other events
+			co.joint_T0_event_proposal();       // Proposals which change T0 and other events
 		}
 		
 		randomwalk_proposal();                                   // Proposals to change parameters for gamma distributed transitions
@@ -285,9 +284,9 @@ int main(int argc, char** argv)
 	time_total += clock();
 	
 	if(true){
-		for(auto he : herd){
+		for(auto co : colony){
 			for(auto i = 0u; i < inf_sampler_bin; i++){
-				cout << he.inf_sample[i] << ",";
+				cout << co.inf_sample[i] << ",";
 			}
 			cout << "\n";
 		}
@@ -303,32 +302,32 @@ void mcmc_initialise()
 	choose_init();
 	
 	Pr = prior();
-	for(auto &he : herd){
-		he.Li = he.likelihood();
+	for(auto &co : colony){
+		co.Li = co.likelihood();
 		
-		for(auto &in : he.ind) in.Li_gamma = in.likelihood_gamma();
+		for(auto &in : co.ind) in.Li_gamma = in.likelihood_gamma();
 		
-		he.Pr_index = he.prior_index();
+		co.Pr_index = co.prior_index();
 	
-		he.inf_sample.resize(inf_sampler_bin);
-		for(auto &bin : he.inf_sample) bin = 100;
+		co.inf_sample.resize(inf_sampler_bin);
+		for(auto &bin : co.inf_sample) bin = 100;
 		
-		he.nprop = 10;
+		co.nprop = 10;
 			
-		he.nmulti_propose = 0; he.nmulti_accept = 0; 
-		he.nT0_propose = 0; he.nT0_accept = 0;
+		co.nmulti_propose = 0; co.nmulti_accept = 0; 
+		co.nT0_propose = 0; co.nT0_accept = 0;
 		
-		he.T0_joint_jump = 1;
-		he.nT0_joint_propose = 0; he.nT0_joint_accept = 0;
+		co.T0_joint_jump = 1;
+		co.nT0_joint_propose = 0; co.nT0_joint_accept = 0;
 	}
 }
 
-/// Initialises a herd with a transmission rate and number of individuals 
-void Herd::initialise(int index_)
+/// Initialises a colony with a transmission rate and number of individuals 
+void Colony::initialise(int index_)
 {
 	index = index_;
 	
-	if(!is_ppc){	// There are duplicate herds for simulating the PPCs.
+	if(!is_ppc){	// There are duplicate colonies for simulating the PPCs.
 		if(model == EXT_INF) beta1_param = add_param("beta1_"+to_string(index),UNIFORM_PRIOR,-15.0,0.0,UNSET);  // Lower limit of -15 because lower cases -inf values and numerical issues
 		else beta1_param = UNSET;
 	
@@ -339,10 +338,10 @@ void Herd::initialise(int index_)
 	}
 }
 
-/// Simulates from a herd until a certain number of individuals recovers (or epidemic dies out)
-void Herd::simulate(const int nrecover)
+/// Simulates from a colony until a certain number of individuals recovers (or epidemic dies out)
+void Colony::simulate(const int nrecover)
 {
-	ind.resize(herd_sizes[index]);
+	ind.resize(colony_sizes[index]);
 
 	for(auto &in : ind){
 		in.inf = false;
@@ -352,7 +351,7 @@ void Herd::simulate(const int nrecover)
 	}
 	
 	auto beta1 = 0.0; if(model == EXT_INF) beta1 = exp(param[beta1_param].value);
-	auto beta2 = param[R0_param].value/param[mu_I].value; if(transmission == DD) beta2 = beta2/herd_sizes[index];
+	auto beta2 = param[R0_param].value/param[mu_I].value; if(transmission == DD) beta2 = beta2/colony_sizes[index];
 
 	auto tp = set_trans_param();
 
@@ -380,7 +379,7 @@ void Herd::simulate(const int nrecover)
 			auto z = uniform_sample(0.0,1.0)*sum;
 			auto n = 0u; while(n < N && z > prob_sum[n]) n++;
 			
-			cout << "Herd " << index << " number of index cases: " << n << endl;
+			cout << "Colony " << index << " number of index cases: " << n << endl;
 			
 			for(auto j = 0u; j < n; j++){
 				ind[j].inf = true;
@@ -412,7 +411,7 @@ void Herd::simulate(const int nrecover)
 	auto I = 0u;                       // The number of infectious individuals
 	auto N = ind.size();               // The number of alive individuals
 
-	auto N_min = N - nrecover;         // Simulates until a specified number of individuals have recovered (this sets the culling time)
+	auto N_min = N - nrecover;         
 	while(N > N_min){
 		auto tnext = LARGE;              // This works out when the next event is
 		int tnexti = UNSET;
@@ -478,14 +477,14 @@ void Herd::simulate(const int nrecover)
 		}
 	}
 	
-	T_cull = t+0.00001;
+	T_end = t+0.00001;
 }
 
 
-/// This loads up the data into the herd
-void Herd::load_data()
+/// This loads up the data into the colony
+void Colony::load_data()
 {
-	ind.resize(herd_sizes[index]);
+	ind.resize(colony_sizes[index]);
 	
 	for(auto &i : ind){
 		i.inf = false;
@@ -496,7 +495,7 @@ void Herd::load_data()
 	
 	cout << remtimes[index].size() << " size\n";
 	
-	T_cull = -LARGE;
+	T_end = -LARGE;
 	for(auto ind_index = 0u; ind_index < remtimes[index].size(); ind_index++){
 		auto Rt = remtimes[index][ind_index]+100.0;//-uniform_sample(0.0,1.0);
 		
@@ -506,14 +505,14 @@ void Herd::load_data()
 		ind[ind_index].found = true;
         ind[ind_index].histimm = false;
 		
-		if(Rt > T_cull) T_cull = Rt; 
+		if(Rt > T_end) T_end = Rt; 
 	}
 	
-	T_cull += TINY;                                 // Cull happens just after the last recovery
+	T_end += TINY;                                 // End happens just after the last recovery
 }
 
 /// Remove exposure and infection times and unobserved mortalities if data is simulated
-void Herd::remove_exp_inf()
+void Colony::remove_exp_inf()
 {
 	auto tp = set_trans_param();
 	vector <int> dead_ind;     // A list of dead individuals  
@@ -548,7 +547,7 @@ void Herd::remove_exp_inf()
 }
 
 /// Adds exposure and infection times to the known removal times
-void Herd::sample_exp_inf()
+void Colony::sample_exp_inf()
 {
 	auto tp = set_trans_param();
 	if(model == EXT_INF){
@@ -593,7 +592,7 @@ void Herd::sample_exp_inf()
 }
 
 /// Sets the time of the initial infection(s)
-void Herd::set_T0()
+void Colony::set_T0()
 {
 	T0 = LARGE;
 	for(const auto &in : ind){
@@ -605,7 +604,7 @@ void Herd::set_T0()
 
  
 /// Performs a random walk MH proposal for beta1
-void Herd::beta1_proposal()
+void Colony::beta1_proposal()
 {
 	auto &par = param[beta1_param];
 
@@ -632,7 +631,7 @@ void Herd::beta1_proposal()
 }
 
 /// Performs a random walk MH proposal for R0 parameter
-void Herd::R0_proposal()
+void Colony::R0_proposal()
 {
 	auto &par = param[R0_param];
 
@@ -660,7 +659,7 @@ void Herd::R0_proposal()
 	}
 }
 
-void Herd::p_rem_proposal()
+void Colony::p_rem_proposal()
 {
 	auto &par = param[p_rem];
 
@@ -690,7 +689,7 @@ void Herd::p_rem_proposal()
 	}
 }
 
-void Herd::p_histimm_proposal()
+void Colony::p_histimm_proposal()
 {
 	auto &par = param[p_histimm];
 
@@ -719,7 +718,7 @@ void Herd::p_histimm_proposal()
 	}
 }
 
-void Herd::p_nd_proposal()
+void Colony::p_nd_proposal()
 {
 	auto &par = param[p_nd];
 
@@ -762,20 +761,20 @@ void randomwalk_proposal()
 
 		auto &par = param[p];
 
-		auto herd_store = herd;
+		auto colony_store = colony;
 		auto param_store = par.value;
 		
 		par.value += normal_sample(0,par.jump);
 		
 		auto dLi = 0.0, dLi_gamma = 0.0;
-		for(auto &he : herd){
+		for(auto &co : colony){
 			if(p == mu_I){
-				auto Li_prop = he.likelihood();
-				dLi += Li_prop-he.Li;
-				he.Li = Li_prop;
+				auto Li_prop = co.likelihood();
+				dLi += Li_prop-co.Li;
+				co.Li = Li_prop;
 			}
 			
-		    for(auto &in : he.ind){
+		    for(auto &in : co.ind){
 			    auto Li_gamma_prop = in.likelihood_gamma();
 			    dLi_gamma += Li_gamma_prop - in.Li_gamma;
 			    in.Li_gamma = Li_gamma_prop;
@@ -794,7 +793,7 @@ void randomwalk_proposal()
 		}
 		else{
 			par.value = param_store;
-			herd = herd_store;
+			colony = colony_store;
 			if(s < nburnin) par.jump *= 0.9995;
 		}
 	}
@@ -803,7 +802,7 @@ void randomwalk_proposal()
 
 
 /// Performs proposals which change T0 
-void Herd::T0_proposal()
+void Colony::T0_proposal()
 {		
 	auto tp = set_trans_param();
 
@@ -870,7 +869,7 @@ void Herd::T0_proposal()
 
 
 /// The performs proposals which swap individuals between being index / non-index cases
-void Herd::swap_proposal()
+void Colony::swap_proposal()
 {
 	// First we make a list 
 	vector <Event> event;
@@ -880,17 +879,17 @@ void Herd::swap_proposal()
 		if(in.inf == true){
 			if(in.Exp_t == T0) num_index++;
 					
-			if(in.Inf_t <= T_cull){
+			if(in.Inf_t <= T_end){
 				Event ev; ev.type = INFECT; ev.t = in.Inf_t;
 				event.push_back(ev);
 			}
 			
-			if(in.Rec_t <= T_cull && in.dead == false){
+			if(in.Rec_t <= T_end && in.dead == false){
 				Event ev; ev.type = RECOVERY; ev.t = in.Rec_t;
 				event.push_back(ev);
 			}
 
-			if(in.Rec_t <= T_cull && in.dead == true){
+			if(in.Rec_t <= T_end && in.dead == true){
 				Event ev; ev.type = REMOVAL; ev.t = in.Rec_t;
 				event.push_back(ev);
 			}
@@ -901,7 +900,7 @@ void Herd::swap_proposal()
 	}
 	
 	sort(event.begin(),event.end(),EV_ord);
-	Event ev; ev.type = TERMINATE; ev.t = T_cull;
+	Event ev; ev.type = TERMINATE; ev.t = T_end;
 	event.push_back(ev);
 	
 	auto nevent = event.size();
@@ -986,7 +985,7 @@ void Herd::swap_proposal()
 					if(num_index > 1){
 						auto latP = gamma_sample(tp.mu_L_sample,tp.sh_L_sample);
 						auto t = in.Inf_t-latP;
-						if(t > T0 && t < T_cull && t < Exp_t_max){
+						if(t > T0 && t < T_end && t < Exp_t_max){
 							auto dLi = 0.0;
 					
 							auto e = 0u; 
@@ -1042,7 +1041,7 @@ void Herd::swap_proposal()
 }
 
 /// Makes multiple changes to events (the initial infection time is not changed)
-void Herd::multi_proposal()
+void Colony::multi_proposal()
 {
 	const double prob_add_rem_unobs = 0.05;                  // This gives the probability of doing an add/rem proposal on unobserved mortality
 	const double prob_add_rem_im = 0.3;                     // This gives the probability of doing an add/rem proposal on immune individual  
@@ -1135,18 +1134,18 @@ void Herd::multi_proposal()
 						auto bin = 0u; while(bin < inf_sampler_bin && z > prob_sum[bin]) bin++;
 						if(bin == inf_sampler_bin) emsg("Problem 2");
 						
-						auto t_exp = (bin+uniform_sample(0.0,1.0))*T_cull/inf_sampler_bin; // Samples exposure time 
+						auto t_exp = (bin+uniform_sample(0.0,1.0))*T_end/inf_sampler_bin; // Samples exposure time 
 						if(t_exp > T0){
 							auto &in = ind[i];
 							in.sample(t_exp,tp);
 							
-							if(in.Rec_t < T_cull){               // Only accept if recovery time before cull
+							if(in.Rec_t < T_end){               // Only accept if recovery time before end
 								in.inf = true;                     
 								in.dead = true;
 								in.found = false;
 
 								probif += in.sample_probability(tp);
-								probif += log((1.0/nlist_sus)*prob[bin]*(inf_sampler_bin/T_cull));
+								probif += log((1.0/nlist_sus)*prob[bin]*(inf_sampler_bin/T_end));
 								probfi += log((1.0/(nlist_unobs+1)));
 								
 								list_unobs.push_back(i); nlist_unobs++;	   // Updates the lists
@@ -1173,10 +1172,10 @@ void Herd::multi_proposal()
 							in.dead = false;
 							in.found = false;
 
-							auto bin = int(inf_sampler_bin*t_exp/T_cull);
+							auto bin = int(inf_sampler_bin*t_exp/T_end);
 														
 							probif += log((1.0/nlist_unobs));
-							probfi += log((1.0/(nlist_sus+1))*prob[bin]*(inf_sampler_bin/T_cull));
+							probfi += log((1.0/(nlist_sus+1))*prob[bin]*(inf_sampler_bin/T_end));
 							probfi += in.sample_probability(tp);
 								
 							list_sus.push_back(i); nlist_sus++;	
@@ -1246,18 +1245,18 @@ void Herd::multi_proposal()
 						auto bin = 0u; while(bin < inf_sampler_bin && z > prob_sum[bin]) bin++;
 						if(bin == inf_sampler_bin) emsg("Problem 2");
 						
-						auto t_exp = (bin+uniform_sample(0.0,1.0))*T_cull/inf_sampler_bin; // Samples exposure time 
+						auto t_exp = (bin+uniform_sample(0.0,1.0))*T_end/inf_sampler_bin; // Samples exposure time 
 						if(t_exp > T0){
 							auto &in = ind[i];
 							in.sample(t_exp,tp);
 							
-							if(in.Rec_t < T_cull){               // Only accept if recovery time before cull
+							if(in.Rec_t < T_end){               // Only accept if recovery time before end
 								in.inf = true;                     
 								in.dead = false;
 								in.found = false;
 
 								probif += in.sample_probability(tp);
-								probif += log((1.0/nlist_sus)*prob[bin]*(inf_sampler_bin/T_cull));
+								probif += log((1.0/nlist_sus)*prob[bin]*(inf_sampler_bin/T_end));
 								probfi += log((1.0/(nlist_im+1)));
 								
 								list_im.push_back(i); nlist_im++;	   // Updates the lists
@@ -1284,10 +1283,10 @@ void Herd::multi_proposal()
 							in.dead = false;
 							in.found = false;
 
-							auto bin = int(inf_sampler_bin*t_exp/T_cull);
+							auto bin = int(inf_sampler_bin*t_exp/T_end);
 														
 							probif += log((1.0/nlist_im));
-							probfi += log((1.0/(nlist_sus+1))*prob[bin]*(inf_sampler_bin/T_cull));
+							probfi += log((1.0/(nlist_sus+1))*prob[bin]*(inf_sampler_bin/T_end));
 							probfi += in.sample_probability(tp);
 								
 							list_sus.push_back(i); nlist_sus++;	
@@ -1350,7 +1349,7 @@ void Herd::multi_proposal()
 						if(uniform_sample(0.0,1.0) < 0.5){
 							if(in.Exp_t != T0){	
 								in.sample_backwards(tp);
-								if(in.Exp_t >= T_cull || in.Exp_t <= T0) in = ind_store; 
+								if(in.Exp_t >= T_end || in.Exp_t <= T0) in = ind_store; 
 								else{
 									probfi += dprobfi;
 									probif += in.sample_probability(tp); 
@@ -1362,7 +1361,7 @@ void Herd::multi_proposal()
 						}
 						else{
 							in.sample(in.Exp_t,tp);
-							if(in.Rec_t > T_cull) in = ind_store;
+							if(in.Rec_t > T_end) in = ind_store;
 							else{
 								probfi += dprobfi;
 								probif += in.sample_probability(tp); 
@@ -1383,7 +1382,7 @@ void Herd::multi_proposal()
 						if(uniform_sample(0.0,1.0) < 0.5){
 							if(in.Exp_t != T0){	
 								in.sample_backwards(tp);
-								if(in.Exp_t >= T_cull || in.Exp_t <= T0) in = ind_store; 
+								if(in.Exp_t >= T_end || in.Exp_t <= T0) in = ind_store; 
 								else{
 									probfi += dprobfi;
 									probif += in.sample_probability(tp); 
@@ -1395,7 +1394,7 @@ void Herd::multi_proposal()
 						}
 						else{
 							in.sample(in.Exp_t,tp);
-							if(in.Rec_t > T_cull) in = ind_store;
+							if(in.Rec_t > T_end) in = ind_store;
 							else{
 								probfi += dprobfi;
 								probif += in.sample_probability(tp); 
@@ -1430,7 +1429,7 @@ void Herd::multi_proposal()
 		for(auto i = 0u; i < ind.size(); i++){
 			auto t_exp = ind[i].Exp_t;
 			if((ind[i].inf == true && ind[i].dead == false) || (ind[i].inf == true && ind[i].dead == true && ind[i].found == false) && t_exp > 0){
-				auto bin = int(inf_sampler_bin*t_exp/T_cull);
+				auto bin = int(inf_sampler_bin*t_exp/T_end);
 				if(bin < 0 || bin >= inf_sampler_bin) emsg("Problem 3");
 				inf_sample[bin]++;
 			}
@@ -1451,7 +1450,7 @@ void param_prior_init()
 		} else if (par.name == "sh_L"){
 			par.value = 5.0;
 		} else if (par.name == "beta1_0"){
-			par.value = log(0.01/herd_sizes[0]);
+			par.value = log(0.01/colony_sizes[0]);
 		} else if (par.name == "R0_0"){
 			par.value = 5.0;
 		} else if (par.name == "p_rem"){
@@ -1530,12 +1529,12 @@ double prior()
  
 
 /// Calculate the log likelihood associated with exposure events
-double Herd::likelihood()
+double Colony::likelihood()
 {
 	if(map_out_prior == true) return 0;
 	time_likelihood -= clock();
 	
-	// Gererates a sorted list of event for the entire herd
+	// Gererates a sorted list of event for the entire colony
 	
 	vector <Event> event;
     auto histI = 0;
@@ -1549,19 +1548,19 @@ double Herd::likelihood()
 			event.push_back(ev);
 			Nexp++;
 			
-			if(in.Inf_t <= T_cull){
+			if(in.Inf_t <= T_end){
 				Event ev; ev.type = INFECT; ev.t = in.Inf_t;
 				event.push_back(ev);
 				Ninf++;
 			}
 			
-			if((in.Rec_t <= T_cull) & (in.dead == false)){
+			if((in.Rec_t <= T_end) & (in.dead == false)){
 				Event ev; ev.type = RECOVERY; ev.t = in.Rec_t;
 				event.push_back(ev);
 				Nrec++;
 			}
 
-            if((in.Rec_t <= T_cull) & (in.dead == true)){
+            if((in.Rec_t <= T_end) & (in.dead == true)){
 				Event ev; ev.type = REMOVAL; ev.t = in.Rec_t;
 				event.push_back(ev);
 				Nrem++;
@@ -1572,7 +1571,7 @@ double Herd::likelihood()
         }
 	}
 	
-	Event ev; ev.type = TERMINATE; ev.t = T_cull;
+	Event ev; ev.type = TERMINATE; ev.t = T_end;
 	event.push_back(ev);
 	
 	sort(event.begin(),event.end(),EV_ord);
@@ -1699,7 +1698,7 @@ double Individual::likelihood_gamma()
 }
 
 /// Calculates the prior for the number of index cases
-double Herd::prior_index()
+double Colony::prior_index()
 {
 	auto num_index = 0u;                   
 	for(const auto &in : ind){
@@ -1804,13 +1803,13 @@ void trace_init()
 {
 	trace << "State"; 
 	for(auto &pa : param) trace << "\t" << pa.name; 
-	for(auto &he : herd) trace << "\tNinf Herd" << he.index;
-    for(auto &he : herd) trace << "\tHisotically Immune" << he.index;
-	for(auto &he : herd) trace << "\tTinit Herd" << he.index;
-	for(auto &he : herd) trace << "\tInit.infected" << he.index;
-	for(auto &he : herd) trace << "\tExt.infected" << he.index;	
-	for(auto &he : herd) trace << "\tLi Herd" << he.index;
-	for(auto &he : herd) trace << "\tPr index Herd" << he.index;
+	for(auto &co : colony) trace << "\tNinf Colony" << co.index;
+    for(auto &co : colony) trace << "\tHisotically Immune" << co.index;
+	for(auto &co : colony) trace << "\tTinit Colony" << co.index;
+	for(auto &co : colony) trace << "\tInit.infected" << co.index;
+	for(auto &co : colony) trace << "\tExt.infected" << co.index;	
+	for(auto &co : colony) trace << "\tLi Colony" << co.index;
+	for(auto &co : colony) trace << "\tPr index Colony" << co.index;
 	trace << "\tPrior";
 	trace << endl;	
 }
@@ -1819,7 +1818,7 @@ void trace_init()
 void ppc_init()
 {
 	ppc << "State";
-	ppc << "\tHerd";
+	ppc << "\tColony";
 	ppc << "\tExposure";
 	ppc << "\tInfection";
 	ppc << "\tRemoval";
@@ -1836,38 +1835,38 @@ void trace_plot()
 	trace << s;
 	for(auto &pa : param) trace << "\t" << pa.value;
 	
-	for(auto &he : herd){
-		auto ninf = 0u; for(const auto &in: he.ind){ if(in.inf == true) ninf++;}
+	for(auto &co : colony){
+		auto ninf = 0u; for(const auto &in: co.ind){ if(in.inf == true) ninf++;}
 		trace << "\t" << ninf;
 	}
 
-    for(auto &he : herd){
-        auto nhistimm = 0u; for(const auto &in: he.ind){ if(in.histimm == true) nhistimm++;}
+    for(auto &co : colony){
+        auto nhistimm = 0u; for(const auto &in: co.ind){ if(in.histimm == true) nhistimm++;}
         trace << "\t" << nhistimm;
     } 
 	
-	for(auto &he : herd) trace << "\t" << he.T0;
+	for(auto &co : colony) trace << "\t" << co.T0;
 	
-	for(auto &he : herd){
-		auto num = 0u;  for(const auto &in: he.ind){ if(in.inf == true && in.Exp_t == he.T0) num++;}
+	for(auto &co : colony){
+		auto num = 0u;  for(const auto &in: co.ind){ if(in.inf == true && in.Exp_t == co.T0) num++;}
 		trace << "\t" << num;
 	}
 	
-	for(auto &he : herd){
+	for(auto &co : colony){
 		auto num = 0u;
 		auto min_inf = LARGE;
-		for(const auto &in: he.ind){
+		for(const auto &in: co.ind){
 			if(in.inf == true && in.Inf_t < min_inf) min_inf = in.Inf_t;
 		}
-		for(const auto &in: he.ind){
+		for(const auto &in: co.ind){
 			if(in.inf == true && in.Exp_t < min_inf) num++;
 		}
 		trace << "\t" << num;
 	}
 	
-	for(auto &he : herd) trace << "\t" << he.Li;
+	for(auto &co : colony) trace << "\t" << co.Li;
 	
-	for(auto &he : herd) trace << "\t" << he.Pr_index;
+	for(auto &co : colony) trace << "\t" << co.Pr_index;
 		
 	trace << "\t" << Pr;
 	
@@ -1877,10 +1876,10 @@ void trace_plot()
 /// Plots useful quantities
 void ppc_plot()
 {
-	for(auto &he : herd_ppc){
-		for(const auto &in: he.ind){
+	for(auto &co : colony_ppc){
+		for(const auto &in: co.ind){
 			if(in.inf == true){
-				ppc << s << "\t" << he.index << "\t" << in.Exp_t << "\t" << in.Inf_t << "\t" << in.Rec_t << "\t" << in.dead << "\t" << in.found << "\t" << in.histimm;
+				ppc << s << "\t" << co.index << "\t" << in.Exp_t << "\t" << in.Inf_t << "\t" << in.Rec_t << "\t" << in.dead << "\t" << in.found << "\t" << in.histimm;
 				ppc << endl;
 			}
 		}
@@ -1888,26 +1887,26 @@ void ppc_plot()
 }
 
 /// Plots useful quantities
-void herd_write()
+void colony_write()
 {
-	for(auto &he : herd){
-		for(const auto &in: he.ind){
+	for(auto &co : colony){
+		for(const auto &in: co.ind){
 			if(in.inf == true){
-				herd_data << in.Rec_t << "\t" << in.dead << "\t" << in.found << "\t" << he.index;
-				herd_data << endl;
+				colony_data << in.Rec_t << "\t" << in.dead << "\t" << in.found << "\t" << co.index;
+				colony_data << endl;
 			}
 		}
 	}
 }
 
 /// Initialises trace plots
-void herd_init()
+void colony_init()
 {
-	herd_data << "Removal Time";
-	herd_data << "Dead";
-	herd_data << "Found";
-	herd_data << "\tHerd";
-	herd_data << endl;	
+	colony_data << "Removal Time";
+	colony_data << "Dead";
+	colony_data << "Found";
+	colony_data << "\tColony";
+	colony_data << endl;	
 }
 
 /// Outputs information about how well the chain is mixing
@@ -1926,12 +1925,12 @@ void mcmc_diagnostics()
 		cout << endl;
 	}
 	
-	for(auto &he : herd){
-		cout << "Herd " << he.index << ": ";
-		cout << int(100*he.nmulti_accept/(he.nmulti_propose+0.001)) << "% multi AP       ";
-		cout << int(100*he.nT0_accept/(he.nT0_propose+0.001)) << "% T0 AP        ";
-		cout << int(100*he.nT0_joint_accept/(he.nT0_joint_propose+0.001)) << "% T0 joint AP   size:" << he.T0_joint_jump << "      ";
-		cout << he.nprop << " Number of proposals          ";
+	for(auto &co : colony){
+		cout << "Colony " << co.index << ": ";
+		cout << int(100*co.nmulti_accept/(co.nmulti_propose+0.001)) << "% multi AP       ";
+		cout << int(100*co.nT0_accept/(co.nT0_propose+0.001)) << "% T0 AP        ";
+		cout << int(100*co.nT0_joint_accept/(co.nT0_joint_propose+0.001)) << "% T0 joint AP   size:" << co.T0_joint_jump << "      ";
+		cout << co.nprop << " Number of proposals          ";
 		cout << endl;
 	}
 	
@@ -2046,8 +2045,8 @@ vector <double> logsum;
 void choose_init()                 
 {
 	auto Nmax = 0u;
-	for(const auto &he : herd){
-		if(he.ind.size() > Nmax) Nmax = he.ind.size();
+	for(const auto &co : colony){
+		if(co.ind.size() > Nmax) Nmax = co.ind.size();
 	}
 	Nmax++;
 	logsum.resize(Nmax);
@@ -2081,7 +2080,7 @@ void emsg(const string& msg)
 }
 
 /// Performs proposals which changes T0 and alters other event time 
-void Herd::joint_T0_event_proposal()
+void Colony::joint_T0_event_proposal()
 {	
 	auto T0_store = T0;
 	
@@ -2089,7 +2088,7 @@ void Herd::joint_T0_event_proposal()
 	
 	T0 += d_T0;
 		
-	auto T_end = T_cull;                                  // This is the maximum time over which scaling is performed
+	auto T_end = T_end;                                  // This is the maximum time over which scaling is performed
 
 	auto ind_store = ind;
 
@@ -2113,7 +2112,7 @@ void Herd::joint_T0_event_proposal()
 				if(frac < 0) illegal = true;
 				fac += log(1-(d_T0/T));
 				in.Exp_t += d_T0*frac; 
-				if(in.Exp_t > T_cull){ illegal = true; break;}
+				if(in.Exp_t > T_end){ illegal = true; break;}
 			}
 					
 			auto frac = (t-in.Inf_t)/T;
@@ -2160,8 +2159,8 @@ void check(int num)
 {
 	double dd;
 	
-	for(auto &he : herd){
-		for(const auto &in : he.ind){                                         // Checks timings are correctly specified
+	for(auto &co : colony){
+		for(const auto &in : co.ind){                                         // Checks timings are correctly specified
 			if(in.latentP < 0){
 				cout << "  Exposed: " << in.Exp_t << "      ";
 				cout << "  Infected: " << in.Inf_t << "      ";
@@ -2178,33 +2177,34 @@ void check(int num)
 		}
 		
 		auto T = LARGE;                                                   // CHecks T0 correctly specified
-		for(const auto &in : he.ind){
+		for(const auto &in : co.ind){
 			if(in.inf == true){
 				if(in.Exp_t < T) T = in.Exp_t;
 				
-				if(in.Exp_t > he.T_cull) emsg("Infection must be before T_cull");
+				if(in.Exp_t > co.T_end) emsg("Infection must be before T_end");
 				
-				if(in.Rec_t > he.T_cull) emsg("Must recover before T_cull");
+				if(in.Rec_t > co.T_end) emsg("Must recover before T_end");
 			}
 		}
-		if(T != he.T0) emsg ("T0 wrong");
+		if(T != co.T0) emsg ("T0 wrong");
 		
-		dd = he.likelihood() - he.Li;	
+		dd = co.likelihood() - co.Li;	
 		if(dd*dd > TINY){
 			emsg("Problem likelihood"+to_string(num));
 		}
 		
-		for(auto &in : he.ind){     
+		for(auto &in : co.ind){     
 			dd = in.likelihood_gamma() - in.Li_gamma;
 			if(dd*dd > TINY){
 				emsg("Problem likelihood_gamma");
 			}
 		}	
 		
-		dd = he.prior_index() - he.Pr_index;	
+		dd = co.prior_index() - co.Pr_index;	
 		if(dd*dd > TINY) emsg("Problem Pr_index");
 	}
 	
 	dd = prior() - Pr;	
 	if(dd*dd > TINY) emsg("Problem Pr");
 }
+
