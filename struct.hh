@@ -44,11 +44,11 @@ struct Individual{         // Information about an individuals
 	double sample_probability(const TransParam &tp);
 };
 
-struct Herd{
-	int index;               // A number index for the herd
+struct Colony{
+	int index;               // A number index for the colony
 	
-	vector <Individual> ind; // A list of individuals in the herds
-	double T_cull;           // The time for culling the herd
+	vector <Individual> ind; // A list of individuals in the colonies
+	double T_end;           // The end time
 	double T0;		         // The time of the first exposure(s)
 	
 	int beta1_param;	     // References the parameter for the expernal force of infection
@@ -121,5 +121,6 @@ const auto LARGE = 1000000.0;       // A token large number
 const auto TINY = 0.000000001;      // A token small number
 
 const auto UNSET = 99999999.0;      // A token unset number
+
 
 const auto map_out_prior = false;   // Set to true to just map out the prior
